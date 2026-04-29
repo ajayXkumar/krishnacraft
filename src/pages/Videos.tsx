@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { getVideos, extractVideoId, embedUrl, type Video } from '../firebase/videos';
+import { getVideos, extractVideoId, type Video } from '../firebase/videos';
 import { fetchChannelVideos, isYouTubeConfigured, type YTVideo } from '../lib/youtubeApi';
 import VideoModal from '../components/VideoModal';
 import { PlayIcon, YoutubeIcon, ArrowRightIcon } from '../components/Icons';
