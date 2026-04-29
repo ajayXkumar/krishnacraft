@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    function isAdmin() {
+      return request.auth != null
+        && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // Product images — public read, admin write
+    match /products/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Site images (hero, artisan, category) — public read, admin write
+    match /site/{allPaths=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Default deny
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

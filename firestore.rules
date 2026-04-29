@@ -1,0 +1,79 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAdmin() {
+      return request.auth != null
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    // USERS — own read/write; admin can read all
+    match /users/{uid} {
+      allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
+      allow create: if request.auth != null && request.auth.uid == uid;
+      allow update: if request.auth != null
+        && (
+          (request.auth.uid == uid
+            && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
+          || isAdmin()
+        );
+      allow delete: if false;
+    }
+
+    // ORDERS — customers read own; admin reads and updates all
+    // Customers may only cancel their own pending/paid orders
+    match /orders/{orderId} {
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.userId || isAdmin());
+      allow update: if isAdmin()
+        || (request.auth != null
+            && request.auth.uid == resource.data.userId
+            && request.resource.data.status == 'cancelled'
+            && resource.data.status in ['pending', 'paid']
+            && request.resource.data.diff(resource.data).affectedKeys()
+                .hasOnly(['status', 'updatedAt', 'statusHistory']));
+      allow create, delete: if false;
+    }
+
+    // PRODUCTS — public read; admin full write
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // SITE SETTINGS — public read; admin write
+    match /siteSettings/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // COUPONS — public read (needed for client-side validation); admin write
+    match /coupons/{code} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // REVIEWS — public read; authenticated users can create their own; admin can update (feature flag)
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if request.auth != null
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.rating >= 1
+        && request.resource.data.rating <= 5;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // VIDEOS — public read; admin write
+    match /videos/{videoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
