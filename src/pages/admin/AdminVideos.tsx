@@ -124,7 +124,7 @@ export default function AdminVideos() {
   const previewId = form.url ? extractVideoId(form.url) : null;
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 lg:p-8 max-w-5xl">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-walnut text-3xl">Videos</h1>

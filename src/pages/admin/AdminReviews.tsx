@@ -30,7 +30,7 @@ export default function AdminReviews() {
   const stars = (n: number) => '★'.repeat(n) + '☆'.repeat(5 - n);
 
   return (
-    <div className="p-8 max-w-4xl">
+    <div className="p-4 lg:p-8 max-w-4xl">
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-walnut text-3xl">Reviews</h1>
         <p className="text-xs text-muted">Feature reviews to show them on the homepage testimonials section.</p>

@@ -136,7 +136,7 @@ export default function AdminProductForm() {
   const images: string[] = form.images?.length ? form.images : (form.img ? [form.img] : []);
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 lg:p-8 max-w-2xl">
       <div className="text-xs tracking-widest uppercase text-muted mb-5">
         <Link to="/admin/products" className="hover:text-gold">Products</Link>
         <span className="mx-2">/</span>

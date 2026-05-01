@@ -74,7 +74,7 @@ export default function AdminProducts() {
   };
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="font-display text-walnut text-3xl">Products</h1>
@@ -122,8 +122,8 @@ export default function AdminProducts() {
       {loading ? (
         <div className="text-muted text-sm py-10 text-center">Loading products…</div>
       ) : (
-        <div className="bg-white border border-line rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-line rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[580px] text-sm">
             <thead className="bg-cream-2 border-b border-line">
               <tr>
                 <th className="px-4 py-3 w-10">

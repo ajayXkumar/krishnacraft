@@ -44,7 +44,7 @@ export default function AdminDashboard() {
     .reduce((sum, [, n]) => sum + n, 0);
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <div className="mb-8">
         <h1 className="font-display text-walnut text-3xl">Dashboard</h1>
         <p className="text-muted text-sm mt-1">

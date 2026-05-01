@@ -74,7 +74,7 @@ export default function AdminOrderDetail() {
   const isTerminal = TERMINAL.includes(order.status as OrderStatus);
 
   return (
-    <div className="p-8 max-w-5xl">
+    <div className="p-4 lg:p-8 max-w-5xl">
       {/* Breadcrumb */}
       <div className="text-xs tracking-widest uppercase text-muted mb-5">
         <Link to="/admin/orders" className="hover:text-gold">Orders</Link>

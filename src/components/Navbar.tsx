@@ -56,14 +56,18 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* ── Main nav — 3-column grid keeps logo left, nav centred, icons right ── */}
-        <div className="max-w-[1400px] w-full mx-auto grid grid-cols-[1fr_auto_1fr] items-center px-5 lg:px-8 py-4 gap-4">
-          {/* Left: Logo */}
-          <Link to="/" className="font-display text-2xl font-semibold text-walnut tracking-wide justify-self-start">
+        {/* ── Main nav ──
+            Mobile: flex justify-between → logo left, icons right (no gap issue)
+            Desktop: 3-column grid → logo left, nav centered, icons right
+        ── */}
+        <div className="max-w-[1400px] w-full mx-auto flex items-center justify-between lg:grid lg:grid-cols-[1fr_auto_1fr] px-5 lg:px-8 py-3 lg:py-4 gap-0 lg:gap-4">
+
+          {/* Logo */}
+          <Link to="/" className="font-display text-xl lg:text-2xl font-semibold text-walnut tracking-wide lg:justify-self-start whitespace-nowrap">
             Krishna <span className="text-gold italic font-medium">Craft</span>
           </Link>
 
-          {/* Centre: Nav links */}
+          {/* Centre: Desktop nav only */}
           <nav className="hidden lg:flex gap-8">
             {isAdmin && (
               <NavLink
@@ -125,7 +129,7 @@ export default function Navbar() {
           </nav>
 
           {/* Right: Icons */}
-          <div className="flex items-center gap-4 lg:gap-5 justify-self-end">
+          <div className="flex items-center gap-3 lg:gap-5 lg:justify-self-end">
             <button
               aria-label="Search"
               onClick={() => setSearchOpen(true)}
@@ -190,6 +194,15 @@ export default function Navbar() {
           <CloseIcon size={24} />
         </button>
         <div className="pt-24 px-8 flex flex-col gap-1 overflow-y-auto h-full pb-12">
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setMobileOpen(false)}
+              className="font-display text-3xl py-3 border-b border-line text-gold hover:text-walnut transition-colors"
+            >
+              Dashboard
+            </Link>
+          )}
           <Link to="/" onClick={() => setMobileOpen(false)} className="font-display text-3xl py-3 border-b border-line text-walnut hover:text-gold transition-colors">Home</Link>
           <Link to="/products" onClick={() => setMobileOpen(false)} className="font-display text-3xl py-3 border-b border-line text-walnut hover:text-gold transition-colors">Shop</Link>
           {categories.map(cat => (

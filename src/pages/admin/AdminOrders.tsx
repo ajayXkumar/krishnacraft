@@ -51,7 +51,7 @@ export default function AdminOrders() {
   });
 
   return (
-    <div className="p-8">
+    <div className="p-4 lg:p-8">
       <div className="mb-6">
         <h1 className="font-display text-walnut text-3xl">Orders</h1>
         <p className="text-muted text-sm mt-1">{orders.length} total orders</p>
@@ -64,7 +64,7 @@ export default function AdminOrders() {
           placeholder="Search order ID, name, phone…"
           value={search}
           onChange={e => setSearch(e.target.value)}
-          className="px-4 py-2 border border-line rounded-sm text-sm bg-white outline-none focus:border-gold w-72"
+          className="px-4 py-2 border border-line rounded-sm text-sm bg-white outline-none focus:border-gold w-full sm:w-72"
         />
         <Select
           value={filter}
@@ -85,8 +85,8 @@ export default function AdminOrders() {
           No orders found
         </div>
       ) : (
-        <div className="bg-white border border-line rounded-xl overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="bg-white border border-line rounded-xl overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm">
             <thead className="bg-cream-2 border-b border-line">
               <tr>
                 {['Order', 'Customer', 'Items', 'Total', 'Status', 'Date', ''].map(h => (

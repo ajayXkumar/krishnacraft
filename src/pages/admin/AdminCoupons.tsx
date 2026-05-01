@@ -72,7 +72,7 @@ export default function AdminCoupons() {
   };
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 lg:p-8 max-w-3xl">
       <div className="flex items-center justify-between mb-8">
         <h1 className="font-display text-walnut text-3xl">Coupons</h1>
         {!editing && (

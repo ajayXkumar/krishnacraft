@@ -56,7 +56,7 @@ export default function AdminAdmins() {
   };
 
   return (
-    <div className="p-8 max-w-2xl">
+    <div className="p-4 lg:p-8 max-w-2xl">
       <div className="mb-8">
         <h1 className="font-display text-walnut text-3xl">Admins</h1>
         <p className="text-muted text-sm mt-1">

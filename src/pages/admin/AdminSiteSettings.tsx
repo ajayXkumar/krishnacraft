@@ -130,7 +130,7 @@ export default function AdminSiteSettings() {
   if (!settings) return null;
 
   return (
-    <div className="p-8 max-w-3xl">
+    <div className="p-4 lg:p-8 max-w-3xl">
       <h1 className="font-display text-walnut text-3xl mb-2">Site Settings</h1>
       <p className="text-muted text-sm mb-8">Manage categories and landing page images. Changes take effect immediately.</p>
 
@@ -201,7 +201,7 @@ export default function AdminSiteSettings() {
 
       {/* ── Category images ── */}
       <Section title="Category Grid Images" subtitle="The big category cards on the homepage">
-        <div className="grid grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
           {settings.categories.map(cat => (
             <ImageSlot
               key={cat}
