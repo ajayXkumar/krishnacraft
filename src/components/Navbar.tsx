@@ -15,7 +15,7 @@ const NAV_LINKS = [
 ];
 
 const TRUST_ITEMS = [
-  'Free Shipping over ₹50,000',
+  'Free Shipping ',
   'COD Available',
   'Handmade in India',
   '30-Day Returns',

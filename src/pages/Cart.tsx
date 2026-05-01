@@ -8,7 +8,7 @@ import { getFirestoreProducts } from '../firebase/productsClient';
 import type { Product } from '../types';
 
 export default function Cart() {
-  const { items, setQty, remove, subtotal, shipping, tax, discount, total, appliedCoupon, setAppliedCoupon } = useCart();
+  const { items, setQty, remove, subtotal, shipping, discount, total, appliedCoupon, setAppliedCoupon } = useCart();
   const [coupon, setCoupon] = useState('');
   const [couponBusy, setCouponBusy] = useState(false);
   const [couponError, setCouponError] = useState('');
@@ -130,15 +130,6 @@ export default function Cart() {
                   <span>Shipping</span>
                   <span>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span>
                 </div>
-                {shipping > 0 && subtotal < 50000 && (
-                  <div className="text-[11px] text-gold mb-1 text-right">
-                    Add {formatPrice(50000 - subtotal)} more for free shipping
-                  </div>
-                )}
-                <div className="flex justify-between py-2 text-sm text-walnut-soft">
-                  <span>GST (5%)</span>
-                  <span>{formatPrice(tax)}</span>
-                </div>
                 {discount > 0 && (
                   <div className="flex justify-between py-2 text-sm text-gold font-medium">
                     <span>Discount</span>
@@ -198,11 +189,15 @@ export default function Cart() {
                   <span className="font-display">{formatPrice(total)}</span>
                 </div>
 
+                <p className="text-[11px] text-muted leading-relaxed mt-6 mb-4 text-center">
+                  Enter your address in the next step, then place your order directly via WhatsApp. We'll confirm and share payment details.
+                </p>
+
                 <Link
                   to="/checkout"
-                  className="w-full mt-7 inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-gold text-white hover:bg-gold-soft transition-all"
+                  className="w-full inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-[#25D366] text-white hover:bg-[#1fba5b] transition-all"
                 >
-                  Proceed to Checkout <ArrowRightIcon />
+                  Place Order via WhatsApp <ArrowRightIcon />
                 </Link>
 
                 <Link

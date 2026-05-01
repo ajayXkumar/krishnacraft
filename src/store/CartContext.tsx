@@ -6,7 +6,7 @@ import { getFirestoreProducts } from '../firebase/productsClient';
 const CART_KEY = 'wooden_heritage_cart';
 
 type CartAction =
-  | { type: 'add'; id: string; qty?: number }
+  | { type: 'add'; id: string; qty?: number; customSize?: string }
   | { type: 'remove'; id: string }
   | { type: 'setQty'; id: string; qty: number }
   | { type: 'clear' }
@@ -20,10 +20,12 @@ function cartReducer(state: CartItem[], action: CartAction): CartItem[] {
       const existing = state.find(i => i.id === action.id);
       if (existing) {
         return state.map(i =>
-          i.id === action.id ? { ...i, qty: i.qty + (action.qty ?? 1) } : i,
+          i.id === action.id
+            ? { ...i, qty: i.qty + (action.qty ?? 1), ...(action.customSize ? { customSize: action.customSize } : {}) }
+            : i,
         );
       }
-      return [...state, { id: action.id, qty: action.qty ?? 1 }];
+      return [...state, { id: action.id, qty: action.qty ?? 1, ...(action.customSize ? { customSize: action.customSize } : {}) }];
     }
     case 'remove':
       return state.filter(i => i.id !== action.id);
@@ -55,7 +57,7 @@ interface CartContextValue {
   appliedCoupon: AppliedCoupon | null;
   isOpen: boolean;
   toast: string | null;
-  add: (id: string, qty?: number) => void;
+  add: (id: string, qty?: number, customSize?: string) => void;
   remove: (id: string) => void;
   setQty: (id: string, qty: number) => void;
   clear: () => void;
@@ -112,8 +114,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const add = useCallback(
-    (id: string, qty = 1) => {
-      dispatch({ type: 'add', id, qty });
+    (id: string, qty = 1, customSize?: string) => {
+      dispatch({ type: 'add', id, qty, customSize });
       showToast('Added to cart');
     },
     [showToast],
@@ -133,15 +135,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const p = productMap[i.id];
     return s + (p ? p.price * i.qty : 0);
   }, 0);
-  // Tiered shipping: free above ₹50k, ₹999 up to ₹10k, ₹1499 up to ₹25k, ₹1999 up to ₹50k
-  const shipping = subtotal === 0 ? 0
-    : subtotal >= 50000 ? 0
-    : subtotal >= 25000 ? 1999
-    : subtotal >= 10000 ? 1499
-    : 999;
-  const tax = Math.round(subtotal * 0.05);
+  const shipping = 0; // Free shipping on all orders
+  const tax = 0; // GST not charged — remove comment when Razorpay/invoice flow is added
   const discount = appliedCoupon?.discount ?? 0;
-  const total = Math.max(0, subtotal + shipping + tax - discount);
+  const total = Math.max(0, subtotal + shipping - discount);
 
   // lock body scroll when drawer open
   useEffect(() => {

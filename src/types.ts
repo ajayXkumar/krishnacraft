@@ -20,6 +20,7 @@ export interface Product {
 export interface CartItem {
   id: string;
   qty: number;
+  customSize?: string;
 }
 
 export type OrderStatus =

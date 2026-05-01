@@ -57,6 +57,13 @@ export async function adminUpdateOrderStatus(
   await updateDoc(doc(db, 'orders', orderId), updates);
 }
 
+export async function adminSetTrackingNumber(orderId: string, trackingNumber: string): Promise<void> {
+  await updateDoc(doc(db, 'orders', orderId), {
+    trackingNumber,
+    updatedAt: Date.now(),
+  });
+}
+
 // ─── Dashboard Stats ────────────────────────────────────────────────────────
 
 export interface DashboardStats {

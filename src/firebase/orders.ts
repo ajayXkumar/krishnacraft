@@ -1,4 +1,5 @@
 import {
+  addDoc,
   arrayUnion,
   collection,
   doc,
@@ -23,6 +24,7 @@ export interface OrderItemSnapshot {
   qty: number;
   category: string;
   wood: string;
+  customSize?: string;
 }
 
 export interface Order {
@@ -96,6 +98,36 @@ export async function cancelOrder(orderId: string): Promise<void> {
     updatedAt: Date.now(),
     statusHistory: arrayUnion({ status: 'cancelled', at: Date.now(), note: 'Cancelled by customer' }),
   });
+}
+
+export interface WhatsAppOrderInput {
+  userId: string;
+  userEmail?: string;
+  items: OrderItemSnapshot[];
+  subtotal: number;
+  shipping: number;
+  tax: number;
+  discount: number;
+  total: number;
+  shippingAddress: UserAddress;
+  couponCode?: string;
+}
+
+export async function saveWhatsAppOrder(input: WhatsAppOrderInput): Promise<string> {
+  const now = Date.now();
+  const { couponCode, userEmail, ...rest } = input;
+  const ref = await addDoc(collection(db, 'orders'), {
+    ...rest,
+    ...(userEmail ? { userEmail } : {}),
+    ...(couponCode ? { couponCode } : {}),
+    status: 'pending' as OrderStatus,
+    paymentStatus: 'pending',
+    orderType: 'whatsapp',
+    createdAt: now,
+    updatedAt: now,
+    statusHistory: [{ status: 'pending', at: now, note: 'Order via WhatsApp' }],
+  });
+  return ref.id;
 }
 
 export async function getUserOrders(uid: string): Promise<Order[]> {

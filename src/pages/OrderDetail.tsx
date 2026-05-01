@@ -124,6 +124,25 @@ function OrderDetailInner() {
         <div className="max-w-[1100px] mx-auto px-5 lg:px-8 grid lg:grid-cols-[1.5fr_1fr] gap-10">
           <div className="space-y-6">
 
+            {/* Tracking banner — shown only while order is in transit */}
+            {(order as any).trackingNumber && order.status === 'shipped' && (
+              <div className="bg-indigo-50 border border-indigo-200 rounded-xl p-5 flex items-start gap-4">
+                <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0 text-indigo-600">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-indigo-800 mb-0.5">Your order is on the way!</p>
+                  <p className="text-xs text-indigo-600 mb-2">Use the tracking number below on your courier's website.</p>
+                  <div className="inline-flex items-center gap-2 bg-white border border-indigo-200 rounded-sm px-3 py-1.5">
+                    <span className="text-[11px] uppercase tracking-widest text-indigo-400">Tracking</span>
+                    <span className="font-mono font-semibold text-indigo-900">{(order as any).trackingNumber}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Workshop timeline */}
             {!isTerminal && (
               <div className="bg-white border border-line rounded-xl p-7">
@@ -132,9 +151,10 @@ function OrderDetailInner() {
                   <div className="absolute left-4 top-4 bottom-4 w-px bg-line" />
                   <div className="space-y-0">
                     {ORDER_STATUS_FLOW.map((s, i) => {
-                      const done = i < currentIdx;
-                      const active = i === currentIdx;
-                      const upcoming = i > currentIdx;
+                      const isDelivered = order.status === 'delivered';
+                      const done = isDelivered ? true : i < currentIdx;
+                      const active = isDelivered ? false : i === currentIdx;
+                      const upcoming = isDelivered ? false : i > currentIdx;
                       const note = (order.statusHistory || []).find(h => h.status === s && h.note)?.note;
                       return (
                         <div key={s} className={`flex gap-4 pb-5 last:pb-0 relative ${upcoming ? 'opacity-35' : ''}`}>

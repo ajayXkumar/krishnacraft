@@ -56,7 +56,7 @@ export default function CartDrawer() {
 
         {/* Trust strip */}
         <div className="flex justify-center gap-6 px-8 py-2.5 bg-walnut/5 border-b border-line">
-          {['COD Available', 'Free Shipping >₹50k', '30-Day Returns'].map(t => (
+          {['COD Available', 'Free Shipping', '30-Day Returns'].map(t => (
             <span key={t} className="text-[10px] text-muted tracking-wide">{t}</span>
           ))}
         </div>
@@ -122,9 +122,14 @@ export default function CartDrawer() {
                       <div className="text-[10px] tracking-[0.15em] uppercase text-muted mb-0.5">
                         {p.category}
                       </div>
-                      <div className="font-display text-walnut text-[14px] mb-2 leading-tight">
+                      <div className="font-display text-walnut text-[14px] leading-tight">
                         {p.name}
                       </div>
+                      {item.customSize && (
+                        <div className="text-[11px] text-gold mt-0.5 mb-1.5">
+                          Custom: {item.customSize}
+                        </div>
+                      )}
                       <div className="inline-flex items-center border border-line rounded-sm overflow-hidden">
                         <button
                           onClick={() => setQty(item.id, item.qty - 1)}
@@ -197,17 +202,20 @@ export default function CartDrawer() {
                 </div>
               )}
             </div>
-            <div className="flex justify-between pt-4 border-t border-line text-lg font-semibold text-walnut mb-5">
+            <div className="flex justify-between pt-4 border-t border-line text-lg font-semibold text-walnut mb-4">
               <span>Total</span>
               <span className="font-display">{formatPrice(total)}</span>
             </div>
+            <p className="text-[11px] text-muted leading-relaxed mb-4 text-center">
+              Enter your address, then place your order directly on WhatsApp. We'll confirm and arrange payment.
+            </p>
             <div className="flex flex-col gap-2">
               <Link
                 to="/checkout"
                 onClick={closeCart}
-                className="inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.15em] rounded-sm bg-gold text-white hover:bg-gold-soft transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.15em] rounded-sm bg-[#25D366] text-white hover:bg-[#1fba5b] transition-all"
               >
-                Checkout — {formatPrice(total)}
+                Place Order via WhatsApp
               </Link>
               <Link
                 to="/cart"
@@ -217,9 +225,6 @@ export default function CartDrawer() {
                 View Cart
               </Link>
             </div>
-            <p className="text-center text-[10px] text-muted mt-3 tracking-wide">
-              COD Available · Secure Checkout · 30-Day Returns
-            </p>
           </div>
         )}
       </aside>

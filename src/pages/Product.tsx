@@ -23,6 +23,7 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [activeImg, setActiveImg] = useState(0);
   const [showVideo, setShowVideo] = useState(false);
+  const [customSize, setCustomSize] = useState('');
 
   useEffect(() => {
     if (!id) return;
@@ -73,8 +74,11 @@ export default function ProductDetail() {
   const videoId = videoUrl ? extractVideoId(videoUrl) : null;
   const hasMedia = galleryImgs.length > 1 || !!videoId;
 
+  const outOfStock = (product as any).inStock === false;
+  const trimmedSize = customSize.trim();
+
   const handleBuyNow = () => {
-    add(product.id, qty);
+    add(product.id, qty, trimmedSize || undefined);
     setTimeout(() => navigate('/cart'), 400);
   };
 
@@ -207,7 +211,7 @@ export default function ProductDetail() {
 
               <p className="text-muted leading-relaxed mb-8">{product.desc}</p>
 
-              <div className="grid grid-cols-2 gap-4 py-6 border-y border-line mb-8">
+              <div className="grid grid-cols-2 gap-4 py-6 border-t border-line mb-0">
                 <div>
                   <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">Wood</div>
                   <div className="text-sm text-walnut font-medium">{product.wood}</div>
@@ -226,54 +230,97 @@ export default function ProductDetail() {
                 </div>
               </div>
 
-              <div className="flex flex-wrap gap-3 items-center mb-6">
-                <div className="inline-flex border border-line rounded-sm overflow-hidden">
+              {/* Custom size input */}
+              <div className="py-5 border-y border-line mb-8">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] tracking-[0.2em] uppercase text-muted">Custom Size</span>
+                  <span className="text-[10px] tracking-[0.15em] uppercase bg-gold/10 text-gold border border-gold/30 px-2 py-0.5 rounded-sm font-medium">
+                    Available
+                  </span>
+                </div>
+                <p className="text-xs text-muted mb-3">
+                  All pieces are handcrafted to order. Enter your preferred dimensions and we'll make it to fit your space perfectly.
+                </p>
+                <input
+                  type="text"
+                  value={customSize}
+                  onChange={e => setCustomSize(e.target.value)}
+                  placeholder={`e.g. ${product.dimensions} (default)`}
+                  className="w-full px-4 py-2.5 border border-line rounded-sm text-sm text-walnut outline-none focus:border-gold bg-cream placeholder:text-muted/60 font-mono"
+                />
+                {trimmedSize && (
+                  <p className="text-[11px] text-gold mt-1.5">✓ Custom size will be noted with your order</p>
+                )}
+              </div>
+
+              {outOfStock ? (
+                <div className="mb-6 space-y-3">
+                  <div className="w-full py-4 text-center text-sm font-medium uppercase tracking-[0.2em] rounded-sm bg-cream-2 text-muted border border-line">
+                    Currently Not Available
+                  </div>
                   <button
-                    onClick={() => setQty(q => Math.max(1, q - 1))}
-                    className="w-11 h-12 bg-cream hover:bg-walnut hover:text-cream text-walnut flex items-center justify-center transition-colors"
+                    onClick={() => toggle(product.id)}
+                    aria-label={has(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                    className={`w-full py-3 flex items-center justify-center gap-2 border rounded-sm transition-colors text-xs tracking-[0.15em] uppercase ${
+                      has(product.id)
+                        ? 'bg-maroon border-maroon text-white'
+                        : 'border-line text-walnut hover:bg-walnut hover:text-cream'
+                    }`}
                   >
-                    <MinusIcon />
-                  </button>
-                  <input
-                    type="number"
-                    value={qty}
-                    onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-14 text-center bg-transparent border-none font-sans text-sm text-walnut outline-none"
-                  />
-                  <button
-                    onClick={() => setQty(q => q + 1)}
-                    className="w-11 h-12 bg-cream hover:bg-walnut hover:text-cream text-walnut flex items-center justify-center transition-colors"
-                  >
-                    <PlusIcon />
+                    <HeartIcon size={14} />
+                    {has(product.id) ? 'Saved to Wishlist' : 'Save to Wishlist'}
                   </button>
                 </div>
+              ) : (
+                <div className="flex flex-wrap gap-3 items-center mb-6">
+                  <div className="inline-flex border border-line rounded-sm overflow-hidden">
+                    <button
+                      onClick={() => setQty(q => Math.max(1, q - 1))}
+                      className="w-11 h-12 bg-cream hover:bg-walnut hover:text-cream text-walnut flex items-center justify-center transition-colors"
+                    >
+                      <MinusIcon />
+                    </button>
+                    <input
+                      type="number"
+                      value={qty}
+                      onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+                      className="w-14 text-center bg-transparent border-none font-sans text-sm text-walnut outline-none"
+                    />
+                    <button
+                      onClick={() => setQty(q => q + 1)}
+                      className="w-11 h-12 bg-cream hover:bg-walnut hover:text-cream text-walnut flex items-center justify-center transition-colors"
+                    >
+                      <PlusIcon />
+                    </button>
+                  </div>
 
-                <button
-                  onClick={() => add(product.id, qty)}
-                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-walnut text-cream hover:bg-ink transition-all"
-                >
-                  Add to Cart
-                </button>
+                  <button
+                    onClick={() => add(product.id, qty, trimmedSize || undefined)}
+                    className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-walnut text-cream hover:bg-ink transition-all"
+                  >
+                    Add to Cart
+                  </button>
 
-                <button
-                  onClick={handleBuyNow}
-                  className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-gold text-white hover:bg-gold-soft transition-all"
-                >
-                  Buy Now
-                </button>
+                  <button
+                    onClick={handleBuyNow}
+                    className="flex-1 min-w-[140px] inline-flex items-center justify-center gap-2 px-6 py-4 text-xs font-medium uppercase tracking-[0.2em] rounded-sm bg-gold text-white hover:bg-gold-soft transition-all"
+                  >
+                    Buy Now
+                  </button>
 
-                <button
-                  onClick={() => toggle(product.id)}
-                  aria-label={has(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
-                  className={`w-12 h-12 flex items-center justify-center border rounded-sm transition-colors ${
-                    has(product.id)
-                      ? 'bg-maroon border-maroon text-white'
-                      : 'border-line text-walnut hover:bg-walnut hover:text-cream'
-                  }`}
-                >
-                  <HeartIcon />
-                </button>
-              </div>
+                  <button
+                    onClick={() => toggle(product.id)}
+                    aria-label={has(product.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                    className={`w-12 h-12 flex items-center justify-center border rounded-sm transition-colors ${
+                      has(product.id)
+                        ? 'bg-maroon border-maroon text-white'
+                        : 'border-line text-walnut hover:bg-walnut hover:text-cream'
+                    }`}
+                  >
+                    <HeartIcon />
+                  </button>
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-5 text-xs text-muted pt-4 border-t border-line">
                 <span className="inline-flex items-center gap-2"><TruckIcon size={16} /> Free shipping over ₹50,000</span>

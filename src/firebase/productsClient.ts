@@ -9,8 +9,13 @@ export async function getFirestoreProducts(): Promise<Product[]> {
     if (snap.empty) return PRODUCTS;
     return snap.docs
       .map(d => ({ id: d.id, ...(d.data() as Omit<Product, 'id'>) }))
-      .filter(p => (p as any).inStock !== false)
-      .sort((a, b) => ((a as any).sortOrder ?? 999) - ((b as any).sortOrder ?? 999));
+      .sort((a, b) => {
+        // In-stock items first, then sort by sortOrder within each group
+        const aOut = (a as any).inStock === false ? 1 : 0;
+        const bOut = (b as any).inStock === false ? 1 : 0;
+        if (aOut !== bOut) return aOut - bOut;
+        return ((a as any).sortOrder ?? 999) - ((b as any).sortOrder ?? 999);
+      });
   } catch {
     return PRODUCTS;
   }

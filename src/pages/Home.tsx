@@ -20,7 +20,7 @@ import {
 
 
 const STRIP_ITEMS = [
-  'Free Shipping over ₹50,000',
+  'Free Shipping ',
   'Lifetime Craftsmanship Warranty',
   '30-Day Easy Returns',
   'Pan-India Assembly',

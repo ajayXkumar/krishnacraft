@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { getOrder } from '../../firebase/orders';
-import { adminUpdateOrderStatus } from '../../firebase/adminOps';
+import { adminUpdateOrderStatus, adminSetTrackingNumber } from '../../firebase/adminOps';
 import { formatPrice } from '../../data/products';
 import { ORDER_STATUS_LABEL, ORDER_STATUS_FLOW, type OrderStatus } from '../../types';
 import type { Order } from '../../firebase/orders';
@@ -31,6 +31,8 @@ export default function AdminOrderDetail() {
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
   const [tracking, setTracking] = useState('');
+  const [trackingEdit, setTrackingEdit] = useState('');
+  const [trackingSaved, setTrackingSaved] = useState(false);
   const [success, setSuccess] = useState('');
   const [error, setError] = useState('');
 
@@ -40,6 +42,22 @@ export default function AdminOrderDetail() {
       .then(o => setOrder(o))
       .finally(() => setLoading(false));
   }, [id]);
+
+  const saveTracking = async () => {
+    if (!order || !trackingEdit.trim()) return;
+    setBusy(true);
+    try {
+      await adminSetTrackingNumber(order.id, trackingEdit.trim());
+      setOrder(prev => prev ? { ...prev, trackingNumber: trackingEdit.trim() } as any : null);
+      setTrackingSaved(true);
+      setTrackingEdit('');
+      setTimeout(() => setTrackingSaved(false), 2500);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to save tracking number');
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const moveToStatus = async (status: OrderStatus) => {
     if (!order) return;
@@ -231,6 +249,35 @@ export default function AdminOrderDetail() {
           {isTerminal && (
             <div className="bg-white border border-line rounded-xl p-6 text-center text-sm text-muted">
               Order is <span className="font-medium text-walnut">{ORDER_STATUS_LABEL[order.status as OrderStatus]}</span>
+            </div>
+          )}
+
+          {/* Tracking number — always editable once shipped */}
+          {['shipped', 'delivered', 'packed'].includes(order.status) && (
+            <div className="bg-white border border-line rounded-xl p-6">
+              <h3 className="text-sm font-medium text-walnut mb-3 tracking-wide uppercase text-[11px]">Tracking Number</h3>
+              {(order as any).trackingNumber && (
+                <div className="font-mono text-sm text-walnut bg-cream-2 px-3 py-2 rounded-sm mb-3">
+                  {(order as any).trackingNumber}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder={(order as any).trackingNumber ? 'Update tracking number' : 'Enter tracking number'}
+                  value={trackingEdit}
+                  onChange={e => setTrackingEdit(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && saveTracking()}
+                  className="flex-1 px-3 py-2 border border-line rounded-sm text-sm outline-none focus:border-gold"
+                />
+                <button
+                  onClick={saveTracking}
+                  disabled={!trackingEdit.trim() || busy}
+                  className="px-4 py-2 text-xs tracking-widest uppercase bg-walnut text-cream rounded-sm hover:bg-ink disabled:opacity-50 transition-all"
+                >
+                  {trackingSaved ? '✓ Saved' : 'Save'}
+                </button>
+              </div>
             </div>
           )}
         </aside>
