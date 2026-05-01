@@ -3,17 +3,15 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 import type { UserAddress } from '../store/AuthContext';
 import { useCart } from '../store/CartContext';
-import { findProduct, formatPrice } from '../data/products';
+import { formatPrice } from '../data/products';
 import { createOrder, verifyPayment } from '../firebase/orders';
 import { openRazorpayCheckout } from '../components/RazorpayCheckout';
 import { RAZORPAY_KEY_ID } from '../firebase/config';
-import { getFirestoreProducts } from '../firebase/productsClient';
 import AddressForm from '../components/AddressForm';
 import ProfileGate from '../components/ProfileGate';
 import { ArrowRightIcon, CheckIcon } from '../components/Icons';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
-import type { Product } from '../types';
 
 type Step = 'address' | 'review' | 'paying';
 
@@ -28,21 +26,12 @@ export default function Checkout() {
 function CheckoutInner() {
   const navigate = useNavigate();
   const { user, profile, refreshProfile } = useAuth();
-  const { items, subtotal, shipping, tax, discount, total, clear, showToast, appliedCoupon } = useCart();
+  const { items, productMap, subtotal, shipping, tax, discount, total, clear, showToast, appliedCoupon } = useCart();
   const [step, setStep] = useState<Step>('address');
   const [selectedAddrId, setSelectedAddrId] = useState<string | null>(null);
   const [showNewAddr, setShowNewAddr] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
-  const [productMap, setProductMap] = useState<Record<string, Product>>({});
-
-  useEffect(() => {
-    getFirestoreProducts().then(list => {
-      const map: Record<string, Product> = {};
-      list.forEach(p => { map[p.id] = p; });
-      setProductMap(map);
-    });
-  }, []);
 
   const selectedAddress = useMemo<UserAddress | null>(() => {
     if (!profile) return null;
@@ -116,7 +105,7 @@ function CheckoutInner() {
         prefill: {
           name: selectedAddress.name || profile.displayName,
           email: profile.email || undefined,
-          contact: profile.phone || selectedAddress.phone,
+          contact: selectedAddress.phone,
         },
         notes: {
           firestoreOrderId: data.firestoreOrderId,
@@ -295,7 +284,7 @@ function CheckoutInner() {
                   <h2 className="text-2xl mb-5">Order Items</h2>
                   <div className="space-y-4">
                     {items.map(it => {
-                      const p = productMap[it.id] || findProduct(it.id);
+                      const p = productMap[it.id];
                       if (!p) return null;
                       return (
                         <div key={it.id} className="flex gap-4 items-center">

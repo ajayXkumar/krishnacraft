@@ -213,3 +213,18 @@ export const XIcon = ({ className, size = 20, strokeWidth = 1.8 }: IconProps) =>
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
+
+export const ArrowLeftIcon = ({ className, size = 16, strokeWidth = 1.6 }: IconProps) => (
+  <svg {...base(size, strokeWidth, className)}>
+    <line x1="19" y1="12" x2="5" y2="12" />
+    <polyline points="12 19 5 12 12 5" />
+  </svg>
+);
+
+export const ExternalLinkIcon = ({ className, size = 14, strokeWidth = 1.6 }: IconProps) => (
+  <svg {...base(size, strokeWidth, className)}>
+    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+    <polyline points="15 3 21 3 21 9" />
+    <line x1="10" y1="14" x2="21" y2="3" />
+  </svg>
+);

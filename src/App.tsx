@@ -31,6 +31,7 @@ import AdminSiteSettings from './pages/admin/AdminSiteSettings';
 import AdminCoupons from './pages/admin/AdminCoupons';
 import AdminReviews from './pages/admin/AdminReviews';
 import AdminVideos from './pages/admin/AdminVideos';
+import AdminAdmins from './pages/admin/AdminAdmins';
 import Wishlist from './pages/Wishlist';
 import Videos from './pages/Videos';
 
@@ -72,6 +73,7 @@ export default function App() {
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="reviews" element={<AdminReviews />} />
               <Route path="videos" element={<AdminVideos />} />
+              <Route path="admins" element={<AdminAdmins />} />
             </Route>
 
             {/* Shop — with navbar/footer */}

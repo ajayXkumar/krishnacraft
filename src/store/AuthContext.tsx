@@ -1,14 +1,13 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   onAuthStateChanged,
-  signInWithPhoneNumber,
-  RecaptchaVerifier,
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as fbSignOut,
   updateProfile,
-  getAdditionalUserInfo,
 } from 'firebase/auth';
-import type { User, ConfirmationResult } from 'firebase/auth';
+import type { User } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase/config';
 
@@ -26,11 +25,9 @@ export interface UserAddress {
 
 export interface UserProfile {
   uid: string;
-  phone: string;
   displayName: string;
-  email?: string;
+  email: string;
   addresses: UserAddress[];
-  role?: 'admin' | 'customer';
 }
 
 interface AuthContextValue {
@@ -40,76 +37,55 @@ interface AuthContextValue {
   loading: boolean;
   profileLoading: boolean;
   profileError: string | null;
-  // Phone OTP flow
-  sendOTP: (phoneNumber: string, recaptchaContainerId: string) => Promise<void>;
-  verifyOTP: (otp: string) => Promise<{ isNewUser: boolean }>;
-  resetOTPSession: () => void;
-  // Profile management
-  completeProfile: (name: string, email?: string) => Promise<void>;
-  updateUserProfile: (updates: { displayName?: string; email?: string }) => Promise<void>;
-  // Auth
+  signInWithGoogle: () => Promise<void>;
+  updateUserProfile: (updates: { displayName?: string }) => Promise<void>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// Convert any input (with or without country code) to E.164 +91xxxxxxxxxx for India.
-function normalizePhone(input: string): string {
-  const digits = input.replace(/\D/g, '');
-  if (digits.length === 10) return `+91${digits}`;
-  if (digits.length === 12 && digits.startsWith('91')) return `+${digits}`;
-  if (input.startsWith('+')) return input.replace(/\s/g, '');
-  return `+${digits}`;
-}
-
-// Reject a promise after `ms` if it hasn't settled.
 function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(
       () => reject(new Error(`${label} timed out after ${ms}ms`)),
       ms,
     );
-    p.then(v => {
-      window.clearTimeout(timer);
-      resolve(v);
-    }).catch(err => {
-      window.clearTimeout(timer);
-      reject(err);
-    });
+    p.then(v => { window.clearTimeout(timer); resolve(v); })
+     .catch(err => { window.clearTimeout(timer); reject(err); });
   });
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileError, setProfileError] = useState<string | null>(null);
 
-  const confirmationRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaRef = useRef<RecaptchaVerifier | null>(null);
-
-  // loadProfile NEVER throws and NEVER hangs — it sets profile=null on any error.
-  // The OTP/auth flow doesn't depend on this; it runs in background.
   const loadProfile = async (u: User) => {
     setProfileLoading(true);
     setProfileError(null);
     try {
-      const ref = doc(db, 'users', u.uid);
-      const snap = await withTimeout(getDoc(ref), 15000, 'Loading profile');
-      if (snap.exists()) {
-        const data = snap.data() as Omit<UserProfile, 'uid'>;
-        setProfile({ uid: u.uid, ...data });
+      // Load user profile and admin status in parallel
+      const [profileSnap, adminSnap] = await Promise.all([
+        withTimeout(getDoc(doc(db, 'users', u.uid)), 15000, 'Loading profile'),
+        withTimeout(getDoc(doc(db, 'admins', u.uid)), 15000, 'Checking admin'),
+      ]);
+
+      if (profileSnap.exists()) {
+        setProfile({ uid: u.uid, ...(profileSnap.data() as Omit<UserProfile, 'uid'>) });
       } else {
         setProfile(null);
       }
+
+      setIsAdmin(adminSnap.exists());
     } catch (err) {
       console.error('[Auth] loadProfile failed:', err);
       setProfile(null);
-      setProfileError(
-        err instanceof Error ? err.message : 'Failed to load profile',
-      );
+      setIsAdmin(false);
+      setProfileError(err instanceof Error ? err.message : 'Failed to load profile');
     } finally {
       setProfileLoading(false);
     }
@@ -119,99 +95,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsub = onAuthStateChanged(auth, async u => {
       setUser(u);
       if (u) {
-        // Fire-and-forget — don't block the UI on profile load.
         loadProfile(u);
       } else {
         setProfile(null);
+        setIsAdmin(false);
       }
       setLoading(false);
     });
     return unsub;
   }, []);
 
-  const clearRecaptcha = () => {
-    try {
-      recaptchaRef.current?.clear();
-    } catch {
-      /* ignore */
-    }
-    recaptchaRef.current = null;
-  };
+  const signInWithGoogle = async () => {
+    const provider = new GoogleAuthProvider();
+    const cred = await signInWithPopup(auth, provider);
+    const u = cred.user;
 
-  const sendOTP = async (phoneNumber: string, recaptchaContainerId: string) => {
-    const e164 = normalizePhone(phoneNumber);
-    if (!/^\+\d{11,15}$/.test(e164)) {
-      throw new Error('Enter a valid 10-digit mobile number.');
-    }
-
-    clearRecaptcha();
-    recaptchaRef.current = new RecaptchaVerifier(auth, recaptchaContainerId, {
-      size: 'invisible',
-    });
-
-    confirmationRef.current = await signInWithPhoneNumber(
-      auth,
-      e164,
-      recaptchaRef.current,
-    );
-  };
-
-  // verifyOTP no longer touches Firestore. It uses Firebase Auth's own
-  // `getAdditionalUserInfo().isNewUser`, returned directly in the OTP response.
-  // This means a blocked Firestore endpoint can NEVER hang the OTP step.
-  const verifyOTP = async (otp: string) => {
-    if (!confirmationRef.current) {
-      throw new Error('OTP session expired. Please request a new code.');
-    }
-    const cred = await confirmationRef.current.confirm(otp);
-    const additionalInfo = getAdditionalUserInfo(cred);
-    const isNewUser = additionalInfo?.isNewUser ?? false;
-
-    confirmationRef.current = null;
-    clearRecaptcha();
-    return { isNewUser };
-  };
-
-  const resetOTPSession = () => {
-    confirmationRef.current = null;
-    clearRecaptcha();
-  };
-
-  // setDoc with merge: true so calling this for an existing user doesn't wipe
-  // their addresses or other profile fields — only updates name/email.
-  const completeProfile = async (name: string, email?: string) => {
-    if (!auth.currentUser) throw new Error('Not signed in.');
-    const u = auth.currentUser;
-    const phone = u.phoneNumber || '';
-
-    if (name) await updateProfile(u, { displayName: name });
-
-    const profileDoc: Record<string, unknown> = {
-      phone,
-      displayName: name,
-      email: email || '',
-    };
-
-    // Only set createdAt + addresses on first creation. The merge below preserves
-    // any pre-existing values for these fields.
     const ref = doc(db, 'users', u.uid);
-    const existing = await withTimeout(getDoc(ref), 15000, 'Saving profile').catch(
-      () => null,
-    );
-    if (!existing || !existing.exists()) {
-      profileDoc.createdAt = serverTimestamp();
-      profileDoc.addresses = [];
-    }
+    const snap = await withTimeout(getDoc(ref), 15000, 'Checking profile');
 
-    await withTimeout(
-      setDoc(ref, profileDoc, { merge: true }),
-      15000,
-      'Saving profile',
-    );
+    if (!snap.exists()) {
+      await withTimeout(
+        setDoc(ref, {
+          displayName: u.displayName || '',
+          email: u.email || '',
+          addresses: [],
+          createdAt: serverTimestamp(),
+        }),
+        15000,
+        'Creating profile',
+      );
+    }
     await loadProfile(u);
   };
 
-  const updateUserProfile = async (updates: { displayName?: string; email?: string }) => {
+  const updateUserProfile = async (updates: { displayName?: string }) => {
     if (!auth.currentUser) throw new Error('Not signed in.');
     const u = auth.currentUser;
 
@@ -221,7 +138,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const docUpdates: Record<string, string> = {};
     if (updates.displayName !== undefined) docUpdates.displayName = updates.displayName;
-    if (updates.email !== undefined) docUpdates.email = updates.email;
 
     if (Object.keys(docUpdates).length > 0) {
       await withTimeout(
@@ -235,8 +151,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signOut = async () => {
     await fbSignOut(auth);
-    confirmationRef.current = null;
-    clearRecaptcha();
+    setIsAdmin(false);
   };
 
   const refreshProfile = async () => {
@@ -248,14 +163,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         profile,
-        isAdmin: profile?.role === 'admin',
+        isAdmin,
         loading,
         profileLoading,
         profileError,
-        sendOTP,
-        verifyOTP,
-        resetOTPSession,
-        completeProfile,
+        signInWithGoogle,
         updateUserProfile,
         signOut,
         refreshProfile,

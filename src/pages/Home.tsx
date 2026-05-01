@@ -68,8 +68,8 @@ export default function Home() {
     getFirestoreProducts().then(all => setFeatured(all.slice(0, 4)));
   }, []);
 
-  const heroImage = siteSettings?.heroImage || 'https://images.unsplash.com/photo-1500076656116-558758c991c1?w=2200&q=85';
-  const artisanImage = siteSettings?.artisanImage || 'https://i.pinimg.com/1200x/55/29/82/552982431c45ab8479c50edd7c6575de.jpg';
+  const heroImage = siteSettings?.heroImage ?? null;
+  const artisanImage = siteSettings?.artisanImage ?? null;
   const categoryImages = siteSettings?.categoryImages || {};
 
   return (
@@ -77,8 +77,8 @@ export default function Home() {
       {/* HERO */}
       <section className="relative min-h-screen flex items-center overflow-hidden pt-20">
         <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url('${heroImage}')` }}
+          className="absolute inset-0 bg-cover bg-center bg-ink transition-opacity duration-700"
+          style={heroImage ? { backgroundImage: `url('${heroImage}')` } : undefined}
         />
         {/* Rugged tonal overlay — keeps the chopped-wood texture visible while text stays legible */}
         <div className="absolute inset-0 bg-gradient-to-b from-ink/70 via-ink/45 to-ink/80" />
@@ -237,11 +237,13 @@ export default function Home() {
         <div className="max-w-[1280px] mx-auto px-5 lg:px-8 grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           <FadeIn className="relative h-[400px] lg:h-[600px] rounded-xl overflow-hidden order-2 lg:order-1">
             <div className="absolute -top-6 -left-6 lg:top-8 lg:left-8 w-full h-full border border-gold rounded-xl -z-10" />
-            <img
-              src={artisanImage}
-              alt="Artisan at work"
-              className="w-full h-full object-cover rounded-xl"
-            />
+            {artisanImage && (
+              <img
+                src={artisanImage}
+                alt="Artisan at work"
+                className="w-full h-full object-cover rounded-xl"
+              />
+            )}
           </FadeIn>
 
           <FadeIn className="order-1 lg:order-2">

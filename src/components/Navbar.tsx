@@ -24,7 +24,7 @@ const TRUST_ITEMS = [
 
 export default function Navbar() {
   const { count, openCart } = useCart();
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const { count: wishlistCount } = useWishlist();
   const categories = useCategories();
   const [scrolled, setScrolled] = useState(false);
@@ -65,6 +65,18 @@ export default function Navbar() {
 
           {/* Centre: Nav links */}
           <nav className="hidden lg:flex gap-8">
+            {isAdmin && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `text-[13px] font-medium tracking-wide relative py-1 transition-colors hover:text-gold ${
+                    isActive ? 'text-gold' : 'text-walnut'
+                  }`
+                }
+              >
+                Dashboard
+              </NavLink>
+            )}
             {NAV_LINKS.map(l => l.dropdown ? (
               <div key={l.label} className="relative group">
                 <NavLink

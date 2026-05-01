@@ -17,7 +17,6 @@ export default function AdminCustomers() {
     const q = search.toLowerCase();
     return !q
       || c.displayName?.toLowerCase().includes(q)
-      || c.phone?.includes(q)
       || c.email?.toLowerCase().includes(q);
   });
 
@@ -47,7 +46,7 @@ export default function AdminCustomers() {
           <table className="w-full text-sm">
             <thead className="bg-cream-2 border-b border-line">
               <tr>
-                {['Customer', 'Phone', 'Orders', 'Total Spent', 'Last Order'].map(h => (
+                {['Customer', 'Orders', 'Total Spent', 'Last Order'].map(h => (
                   <th key={h} className="text-left px-5 py-3 text-[10px] tracking-[0.2em] uppercase text-muted font-medium">
                     {h}
                   </th>
@@ -61,7 +60,6 @@ export default function AdminCustomers() {
                     <div className="font-medium text-walnut">{c.displayName || '—'}</div>
                     {c.email && <div className="text-xs text-muted">{c.email}</div>}
                   </td>
-                  <td className="px-5 py-4 font-mono text-xs text-walnut-soft">{c.phone}</td>
                   <td className="px-5 py-4">
                     <span className={`text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-sm ${
                       c.orderCount > 0 ? 'bg-gold/10 text-gold' : 'bg-cream-2 text-muted'

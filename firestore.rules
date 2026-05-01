@@ -3,26 +3,30 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Check admin status via the admins collection (not users.role)
     function isAdmin() {
       return request.auth != null
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // ADMINS — any signed-in user reads their own doc to check their status on login
+    // Only existing admins can grant or revoke admin access (first admin added via Firebase Console)
+    match /admins/{uid} {
+      allow read: if request.auth != null && request.auth.uid == uid;
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+      allow update: if false;
     }
 
     // USERS — own read/write; admin can read all
     match /users/{uid} {
       allow read: if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow create: if request.auth != null && request.auth.uid == uid;
-      allow update: if request.auth != null
-        && (
-          (request.auth.uid == uid
-            && !('role' in request.resource.data.diff(resource.data).affectedKeys()))
-          || isAdmin()
-        );
+      allow update: if request.auth != null && (request.auth.uid == uid || isAdmin());
       allow delete: if false;
     }
 
     // ORDERS — customers read own; admin reads and updates all
-    // Customers may only cancel their own pending/paid orders
     match /orders/{orderId} {
       allow read: if request.auth != null
         && (request.auth.uid == resource.data.userId || isAdmin());
@@ -48,13 +52,13 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
-    // COUPONS — public read (needed for client-side validation); admin write
+    // COUPONS — public read; admin write
     match /coupons/{code} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // REVIEWS — public read; authenticated users can create their own; admin can update (feature flag)
+    // REVIEWS — public read; authenticated users create their own; admin manages
     match /reviews/{reviewId} {
       allow read: if true;
       allow create: if request.auth != null

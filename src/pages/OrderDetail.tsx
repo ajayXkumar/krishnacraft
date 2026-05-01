@@ -157,7 +157,7 @@ function OrderDetailInner() {
                               {ORDER_STATUS_LABEL[s]}
                             </div>
                             {note && <div className="text-xs text-muted mt-1">{note}</div>}
-                            {active && <div className="text-xs text-gold mt-1">In progress</div>}
+                    
                           </div>
                         </div>
                       );

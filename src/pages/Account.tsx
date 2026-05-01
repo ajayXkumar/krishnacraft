@@ -25,7 +25,6 @@ function AccountInner() {
   const [profileError, setProfileError] = useState('');
   const [profileForm, setProfileForm] = useState({
     displayName: profile?.displayName || '',
-    email: profile?.email || '',
   });
 
   if (!user || !profile) return null;
@@ -69,7 +68,6 @@ function AccountInner() {
   const startEditProfile = () => {
     setProfileForm({
       displayName: profile.displayName || '',
-      email: profile.email || '',
     });
     setEditingProfile(true);
     setProfileError('');
@@ -82,7 +80,6 @@ function AccountInner() {
     try {
       await updateUserProfile({
         displayName: profileForm.displayName.trim(),
-        email: profileForm.email.trim(),
       });
       setEditingProfile(false);
     } catch (err) {
@@ -95,15 +92,6 @@ function AccountInner() {
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
-  };
-
-  // pretty-print phone +91XXXXXXXXXX → +91 XXXXX XXXXX
-  const formatPhone = (p: string) => {
-    if (!p) return '—';
-    if (p.startsWith('+91') && p.length === 13) {
-      return `+91 ${p.slice(3, 8)} ${p.slice(8)}`;
-    }
-    return p;
   };
 
   return (
@@ -165,18 +153,18 @@ function AccountInner() {
                 <form onSubmit={saveProfile} className="space-y-5">
                   <div>
                     <label className="block text-[11px] tracking-[0.2em] uppercase text-muted mb-2">
-                      Mobile Number
+                      Google Account
                     </label>
                     <div className="px-4 py-3 border border-line bg-cream-2 rounded-sm font-sans text-sm text-walnut">
-                      {formatPhone(profile.phone)}
+                      {profile.email}
                     </div>
                     <div className="text-[11px] text-muted mt-2">
-                      Mobile number cannot be changed.
+                      Managed by Google — cannot be changed here.
                     </div>
                   </div>
                   <div>
                     <label className="block text-[11px] tracking-[0.2em] uppercase text-muted mb-2">
-                      Full Name
+                      Display Name
                     </label>
                     <input
                       type="text"
@@ -186,20 +174,6 @@ function AccountInner() {
                       onChange={e =>
                         setProfileForm(s => ({ ...s, displayName: e.target.value }))
                       }
-                      className="w-full px-4 py-3 border border-line bg-cream rounded-sm font-sans text-sm outline-none focus:border-gold"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-[11px] tracking-[0.2em] uppercase text-muted mb-2">
-                      Email (optional)
-                    </label>
-                    <input
-                      type="email"
-                      value={profileForm.email}
-                      onChange={e =>
-                        setProfileForm(s => ({ ...s, email: e.target.value }))
-                      }
-                      placeholder="you@example.com"
                       className="w-full px-4 py-3 border border-line bg-cream rounded-sm font-sans text-sm outline-none focus:border-gold"
                     />
                   </div>
@@ -228,24 +202,14 @@ function AccountInner() {
                   </div>
                 </form>
               ) : (
-                <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                <div className="grid sm:grid-cols-2 gap-4 text-sm">
                   <div>
-                    <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">
-                      Mobile
-                    </div>
-                    <div className="text-walnut">{formatPhone(profile.phone)}</div>
-                  </div>
-                  <div>
-                    <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">
-                      Name
-                    </div>
+                    <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">Name</div>
                     <div className="text-walnut">{profile.displayName || '—'}</div>
                   </div>
                   <div>
-                    <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">
-                      Email
-                    </div>
-                    <div className="text-walnut">{profile.email || <span className="text-muted">Not added</span>}</div>
+                    <div className="text-[11px] tracking-[0.2em] uppercase text-muted mb-1">Google Account</div>
+                    <div className="text-walnut">{profile.email}</div>
                   </div>
                 </div>
               )}

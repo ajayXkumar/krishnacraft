@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useReducer, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useReducer, useState, useCallback, useMemo } from 'react';
 import type { ReactNode } from 'react';
-import type { CartItem } from '../types';
-import { findProduct } from '../data/products';
+import type { CartItem, Product } from '../types';
+import { getFirestoreProducts } from '../firebase/productsClient';
 
 const CART_KEY = 'wooden_heritage_cart';
 
@@ -45,6 +45,7 @@ export interface AppliedCoupon {
 
 interface CartContextValue {
   items: CartItem[];
+  productMap: Record<string, Product>;
   count: number;
   subtotal: number;
   shipping: number;
@@ -73,6 +74,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [toast, setToast] = useState<string | null>(null);
   const [hydrated, setHydrated] = useState(false);
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
+  const [products, setProducts] = useState<Product[]>([]);
+
+  // Load products from Firestore once on mount
+  useEffect(() => {
+    getFirestoreProducts().then(setProducts);
+  }, []);
+
+  const productMap = useMemo(() => {
+    const map: Record<string, Product> = {};
+    products.forEach(p => { map[p.id] = p; });
+    return map;
+  }, [products]);
 
   // load from localStorage
   useEffect(() => {
@@ -117,7 +130,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const count = items.reduce((s, i) => s + i.qty, 0);
   const subtotal = items.reduce((s, i) => {
-    const p = findProduct(i.id);
+    const p = productMap[i.id];
     return s + (p ? p.price * i.qty : 0);
   }, 0);
   // Tiered shipping: free above ₹50k, ₹999 up to ₹10k, ₹1499 up to ₹25k, ₹1999 up to ₹50k
@@ -140,6 +153,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const value: CartContextValue = {
     items,
+    productMap,
     count,
     subtotal,
     shipping,

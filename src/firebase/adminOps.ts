@@ -2,12 +2,14 @@ import {
   collection,
   doc,
   getDocs,
+  getDoc,
   setDoc,
   updateDoc,
   deleteDoc,
   query,
   where,
   arrayUnion,
+  serverTimestamp,
 } from 'firebase/firestore';
 import { db } from './config';
 import { deleteStorageFile } from './storageUtils';
@@ -172,4 +174,35 @@ export async function adminGetCustomers(): Promise<CustomerWithOrders[]> {
         : undefined,
     };
   });
+}
+
+// ─── Admin management ──────────────────────────────────────────────────────
+
+export interface AdminRecord {
+  uid: string;
+  email: string;
+  displayName: string;
+  addedAt: number;
+}
+
+export async function listAdmins(): Promise<AdminRecord[]> {
+  const snap = await getDocs(collection(db, 'admins'));
+  return snap.docs.map(d => ({ uid: d.id, ...(d.data() as Omit<AdminRecord, 'uid'>) }));
+}
+
+export async function addAdmin(uid: string): Promise<void> {
+  // Look up the user profile to get their email + name
+  const userSnap = await getDoc(doc(db, 'users', uid.trim()));
+  if (!userSnap.exists()) throw new Error('No user found with that UID. They must sign in first.');
+
+  const data = userSnap.data() as { email?: string; displayName?: string };
+  await setDoc(doc(db, 'admins', uid.trim()), {
+    email: data.email || '',
+    displayName: data.displayName || '',
+    addedAt: serverTimestamp(),
+  });
+}
+
+export async function removeAdmin(uid: string): Promise<void> {
+  await deleteDoc(doc(db, 'admins', uid));
 }

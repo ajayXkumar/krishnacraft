@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useCart } from '../store/CartContext';
-import { findProduct, formatPrice } from '../data/products';
+import { formatPrice } from '../data/products';
 import { CloseIcon, PlusIcon, MinusIcon, BagIcon, ArrowRightIcon } from './Icons';
 
 const CROSS_SELL = [
@@ -12,6 +12,7 @@ const CROSS_SELL = [
 export default function CartDrawer() {
   const {
     items,
+    productMap,
     isOpen,
     closeCart,
     setQty,
@@ -19,9 +20,8 @@ export default function CartDrawer() {
     subtotal,
     shipping,
     discount,
+    total,
   } = useCart();
-
-  const total = Math.max(0, subtotal + shipping - discount);
 
   return (
     <>
@@ -104,7 +104,7 @@ export default function CartDrawer() {
           ) : (
             <div>
               {items.map(item => {
-                const p = findProduct(item.id);
+                const p = productMap[item.id];
                 if (!p) return null;
                 return (
                   <div
